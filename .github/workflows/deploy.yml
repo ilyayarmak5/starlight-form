@@ -1,0 +1,29 @@
+name: Deploy
+
+on: [push]
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v1
+            - uses: GoogleCloudPlatform/github-actions/setup-gcloud@master
+              with:
+                  version: 275.0.0
+                  service_account_key: ${{ secrets.CUSTOMPROJECTS_GOOGLE_APPLICATION_CREDENTIALS }}
+
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v1
+              with:
+                  node-version: 12.x
+
+            - name: npm install and build
+              run: |
+                  npm install
+                  CI=false npm run build
+
+            - name: Upload files
+              run: |
+                  gcloud config set project raisely-custom
+                  gsutil -m -h "Cache-Control:no-cache" cp -r build/* gs://tourdekids-signup.raisely.dev
